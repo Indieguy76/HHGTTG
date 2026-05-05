@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>The Hitchhiker's Guide to the Galaxy</title>
+    <style>
+        :root {
+            --guide-green: #00ff41;
+            --guide-bg: #0a0a0a;
+            --panic-red: #ff0000;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: var(--guide-green);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        /* Adjusted height to 88% to clear the bottom navigation bar */
+        #guide-unit {
+            width: 95vw;
+            max-width: 420px;
+            height: 80vh; 
+            max-height: 850px;
+            background-color: var(--guide-bg);
+            border: 3px solid #333;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.15);
+            position: relative;
+        }
+
+        header {
+            padding: 16px;
+            text-align: center;
+            border-bottom: 2px solid var(--guide-green);
+            background: #050505;
+        }
+
+        h1 { margin: 0; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 1.5px; }
+
+        #search-container { 
+            padding: 6px; 
+            display: flex; 
+            gap: 6px;
+            position: relative; 
+        }
+
+        #clear-btn {
+    background: #000;
+    border: 1px solid var(--guide-green);
+    color: var(--guide-green);
+    padding: 5px 15px;
+    font-family: 'Courier New', Courier, monospace;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+        #clear-btn:active {
+    background: var(--guide-green);
+    color: #000;
+}
+
+        input {
+            flex-grow: 1;
+            padding: 10px;
+            background: #000;
+            border: 1px solid var(--guide-green);
+            color: var(--guide-green);
+            font-size: 1rem;
+            outline: none;
+            border-radius: 0;
+            -webkit-appearance: none;
+        }
+
+        #voice-btn {
+            background: #000;
+            border: 1px solid var(--guide-green);
+            color: var(--guide-green);
+            padding: 5px 8px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .voice-on { background: var(--guide-green) !important; color: #000 !important; }
+
+        #suggestions {
+            position: absolute;
+            top: 55px;
+            left: 10px;
+            width: calc(100% - 20px);
+            background: #000;
+            border: 1px solid var(--guide-green);
+            z-index: 100;
+            display: none;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .suggestion-item { padding: 12px; border-bottom: 1px solid #111; text-transform: uppercase; cursor: pointer; font-size: 0.9rem; }
+
+        #display-area {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .entry-title { 
+            font-size: 1.4rem; 
+            text-decoration: underline; 
+            margin-bottom: 12px; 
+            color: var(--guide-green); 
+            text-transform: uppercase; 
+        }
+
+        .flashing { animation: blink 0.8s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+
+        .big-text {
+            font-size: 4.2rem;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 40px;
+            line-height: 1.2;
+        }
+
+        .panic-color { color: var(--panic-red); }
+        .enjoy-color { color: var(--guide-green); }
+
+        .thumb-logo {
+            width: 130px;
+            height: 130px;
+            margin: 20px auto;
+            display: block;
+            fill: var(--guide-green);
+        }
+
+        .footer-nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            /* Extra padding at the bottom for modern gesture-based phones */
+            padding-bottom: calc(15px + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--guide-green);
+            background: #050505;
+        }
+
+        .nav-btn {
+            background: none;
+            border: 1px solid var(--guide-green);
+            color: var(--guide-green);
+            padding: 10px 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .nav-btn:active { background: var(--guide-green); color: #000; }
+    </style>
+</head>
+<body>
+
+<div id="guide-unit">
+    <header>
+        <h1>The Hitchhiker's Guide to the Galaxy</h1>
+    </header>
+
+    <div id="search-container">
+    <input type="text" id="search-input" placeholder="Search..." autocomplete="off" oninput="showSuggestions(this.value)">
+    <button id="clear-btn" onclick="clearSearch()">X</button> 
+    <button id="voice-btn" onclick="toggleAudio()">VOICE: OFF</button>
+    <div id="suggestions"></div>
+</div>
+
+    <div id="display-area">
+        <div id="content">
+            <div class="entry-title">SYSTEM READY</div>
+            <p>Awaiting Hitchhiker input...</p>
+        </div>
+    </div>
+
+    <div class="footer-nav">
+        <button class="nav-btn" onclick="runSync()">SYNC</button>
+        <button class="nav-btn" onclick="randomEntry()">RANDOM</button>
+        <button class="nav-btn" onclick="runHelp()">HELP</button>
+    </div>
+</div>
+
+<script>
+    const entries = {
+    "gargravarr": "the Custodian of the Total Perspective Vortex. A disembodied soul who leads victims to their end within the vortex",
+    "fairy cake": "The matter used by the Total Perspective Vortex to extrapolate a model of the entire universe and the victims relation to it.",
+    "trin tragula": "Inventor of the Total Perspective Vortex. Created to show his wife, that if life is to exsist in an infinite universe. The last thing it can afford to have is a sense of proportion. Which his Wife would tell him to have in upwards of some 30 times a day.",
+    "total perspective vortex": "created by Trin Tragula as a way to get back at his wife. The vortex shows it's victim their place amongst the vast infinity of the universe  a microscopic dot on a microscopic dot. A perspective that destroys the mind and burns the soul.",
+    "frogstar world b": "the second planet in the Frogstar System, widely held to be the most totally evil place in the Galaxy. Home to the Total Perspective Vortex and future home of Milliways the resturant at the end of the universe",
+    "infinite improbability drive": "A wonderful new method of crossing interstellar distances without the tedious mucking about in hyperspace allowing it to pass through every conceivable point in every conceivable universe simultaneously.",
+    "bowl of petunias": "Also created by Infinate Improbability Drive as the Heart of Gold escaped certain doom. Heard exclaiming 'not again!' just before joining the carcass of the whale on the surface of Magrathea",
+    "the whale": "A Sperm Whale, a byproduct of the Infinate Improbabiliy Drive on the planet Magrathea just moments before the certain destruction of the Heart of Gold and her crew. Left with it's own sudden exsistance while falling through the air, wondering if the ground will be it's friend before leaving a sad wet crater on the surface",
+    "eddie": "The ship board computer for the starship Heart of Gold. Whose enthusiasm and lust for life were a constant irritation to the ship's crew, particularly Zaphod Beeblebrox.",
+    "magrathea": "an ancient planet located the Horsehead Nebula. The leader in custom-made, luxury planet building. so successful that it became the richest planet of all time and the rest of the Galaxy was reduced to abject poverty.",
+    "deep thought": "a supercomputer created by a race of hyper intelligent pan dimensional beings that was to calculate the answer to the Ultimate Question of Life the Universe and Everything.",    
+    "hotblack desiato": "the front man of the band Disaster Area. He once spent a year dead for tax reasons. a long-time acquaintance of Ford Prefect.",    
+    "disaster area": "a plutonium rock band fronted by Hotblack Desiato from the Gagrakacka Mind Zones, generally regarded as not only the loudest rock band in the Galaxy, but also the loudest noise of any kind at all.",
+    "arthur dent": "A man in his late twenties who has a permanent worried expression. Also known to make a decent sandwich and hates Thursdays.",
+    "arthur dent's house": "Squattish, squarish, made of brick, and had four windows set in the front which more or less exactly failed to please the eye. Demolished to make way for a bypass.",
+    "mr. l. prosser": "A fat and shabby council employee who is a direct descendant of Genghis Khan. His only visible traits of this lineage are a stout stomach and a fondness for fur hats.",
+    "ford prefect": "A roving researcher for the Guide who spent fifteen years on Earth. Tall with wiry gingerish hair, he is an unruly boozer from a small planet in the vicinity of Betelgeuse.",
+    "zaphod beeblebrox": "President of the Imperial Galactic Government, having two heads and three arms. He is an adventurer, ex-hippie, and the only man to survive the Total Perspective Vortex.",
+    "trillian - tricia mcmillan": "A brilliant mathematician and astrophysicist. She is the only other human to have survived the destruction of Earth.",
+    "marvin": "A prototype for the Sirius Cybernetics Corporation’s 'Genuine People Personalities' technology. He is chronically depressed with a brain the size of a planet and holds deep contempt for all organic life.",
+    "pan galactic gargle blaster": "An alcoholic drink whose effect is like having your brains smashed out by a slice of lemon wrapped round a large gold brick. It was invented by Zaphod Beeblebrox.",
+    "alcohol": "The best drink in existence is the Pan Galactic Gargle Blaster. It involves Arcturan Mega-gin, Fallian marsh gas, and the tooth of an Algolian Suntiger. Be careful.",
+    "vogon poetry": "The third worst in the Universe. The very worst poetry of all perished along with its creator, Paula Nancy Millstone Jennings, in the destruction of Earth.",
+    "vogons": "Thick-willed, slug-brained, and stubborn. They are the backbone of the Galactic Civil Service. On no account allow one to read poetry at you.",
+    "vogon constructor fleet": "Impossibly huge yellow somethings that hang in the sky in the same way that bricks don't. They are generally used for clearing the way of hyperspace bypasses.",
+    "golgafrinchans": "The inhabitants of the planet Golgafrincham. They famously decided to rid themselves of the useless third of their population by sending them away on a space ship.",
+    "the b-ark": "A ship carrying the middle-management and service industry workers of Golgafrincham. It was launched under the pretense that the rest of the planet was about to be destroyed by a giant space goat.",
+    "the captain": "The commander of the Golgafrinchan B-Ark. He spent the first thirty-six years of the journey in a bathtub with a rubber duck, firmly believing he was doing a brilliant job of commanding.",
+    "number one and two": "The golgafrinchans Captain's subordinates. Number One takes doing nothing very seriously, while Number Two is constantly stomping, shouting and being official.",
+    "telephone sanitizers": "The most vital members of the Golgafrinchan B-Ark. After they were sent away, the rest of their home planet died out from a virulent disease contracted from an unsanitized telephone.",
+    "random dent": "Arthur Dent's daughter, born in the most improbable of circumstances. She is sharp, cynical, and largely raised by the Guide itself, which makes her remarkably knowledgeable and equally unimpressed.",
+    "fenchurch": "A woman Arthur meets on a flight home; she has a strong intuition that the universe is keeping secrets from her.",
+    "the final message": "God’s Final Message to His Creation. It is written in giant letters of fire on the side of a mountain and simply says: WE APOLOGIZE FOR THE INCONVENIENCE.",
+    "krikkit": "A planet surrounded by a giant dust cloud that hid the rest of the Universe. When they finally discovered other people existed, they reacted politely by deciding to destroy them all.",
+    "the krikkiters": "White-robed, charming people who are obsessed with a game that bears a suspicious resemblance to Earth's cricket, though theirs involves significantly more interstellar warfare.",
+    "mattresses": "Large, friendly, pocket-sprung creatures that live in the swamps of Squornshellous Zeta. Most of them are named Zem, and they spend their time 'flolloping' and 'glurping' in the mud.",
+    "squornshellous zeta": "A planet that is mostly swamp and home to the mattresses. It is the only place in the galaxy where you can be told to 'get lost' by a piece of bedding.",
+    "heart of gold": "A groundbreaking starship shaped like a sleek running shoe. It is the first spacecraft powered by the Infinite Improbability Drive.",
+    "slartibartfast": "An award-winning designer of planets from Magrathea who specializes in coastlines. He is particularly fond of the fjords he designed for Norway.",
+    "babel fish": "Small, yellow, and leech-like. If you stick one in your ear, you can instantly understand anything said to you in any language. Has caused more and bloodier wars than anything else in history.",
+    "towel": "The most massively useful thing an interstellar hitchhiker can have. A man who knows where his towel is is clearly a man to be reckoned with.",
+    "horse and groom": "The pub where Arthur and Ford prepare for their travels just before the Earth is destroyed. Three pints of bitter is the recommended dosage.",
+    "ravenous bugblatter beast of traal": "A mind-bogglingly stupid animal. It assumes that if you can't see it, it can't see you. It is daft as a bush, but exceptionally ravenous.",
+    "dentrassis": "An unruly tribe of gourmands who serve as catering staff on Vogon fleets. They love Vogon money but hate Vogons, and are always willing to help hitchhikers just to be annoying.",
+    "eccentrica gallumbits": "The triple-breasted whore of Eroticon 6. Her erogenous zones begin roughly four miles from her actual body.",
+    "wowbagger the infinitely prolonged": "An immortal being on a mission to insult every living creature in the universe in alphabetical order. He finds immortality remarkably boring.",
+    "oolon colluphid": "The author of the philosophical blockbusters 'Where God Went Wrong' and 'Who is this God Person Anyway?'.",
+    "milliways": "The Restaurant at the End of the Universe. It allows diners to watch the end of time while eating a fabulous dinner.",
+    "ursa minor": "The location of the great publishing houses that produce the Hitchhiker's Guide to the Galaxy.",
+    "barnard's star": "A star system six light-years away from Earth. Ford Prefect considers this a nearby and convenient destination for hitching.",
+    "folfanga": "The fourth world of the Folfanga system, where the slugs are particularly slow.",
+    "sub-etha sens-o-matic": "An electronic device used to monitor sub-etha signals and alert hitchhikers to passing spacecraft.",
+    "electronic thumb": "A signaling device used for hitching a lift. It's much more effective than a literal thumb in deep space.",
+    "bypasses": "Devices that allow people to drive very fast between two points while the people in the middle wonder why everyone is so keen to leave.",
+    "space": "Space is big. You just won't believe how vastly, hugely, mind-bogglingly big it is. Interstellar distances do not fit into the human imagination.",
+    "flying": "The art of throwing yourself at the ground and missing. You must have your attention suddenly distracted when you are halfway there.",
+    "earth": "Mostly harmless.",
+    "42": "The Answer to the Ultimate Question of Life, the Universe, and Everything. The question remains unknown.",
+    "the guide": "A wholly remarkable boo k. It has the words DON'T PANIC inscribed in large, friendly letters on its cover."
+};
+
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let typingTimer;
+    let audioEnabled = false;
+
+    function clearSearch() {
+    const input = document.getElementById('search-input');
+    const suggBox = document.getElementById('suggestions');
+    
+    input.value = ''; // Clears the text
+    suggBox.style.display = 'none'; // Hides suggestions
+    input.focus(); // Puts the cursor back in the box
+    
+    // Optional: Play a tiny tone to confirm the clear
+    if (typeof playTone === "function") playTone(450, 0.05); 
+}
+
+    function getBritishVoice() {
+        const voices = window.speechSynthesis.getVoices();
+        return voices.find(v => v.lang === 'en-GB' && v.name.includes('Google')) || 
+               voices.find(v => v.lang === 'en-GB') || 
+               voices[0]; 
+    }
+
+    function toggleAudio() {
+    audioEnabled = !audioEnabled;
+    const btn = document.getElementById('voice-btn');
+    btn.innerText = `VOICE: ${audioEnabled ? 'ON' : 'OFF'}`;
+
+    if (audioEnabled) {
+        btn.classList.add('voice-on');
+        speak("System online", "The Hitchhiker's Guide to the Galaxy voice interface is now active.");
+        } else {
+        btn.classList.remove('voice-on');
+
+        // Create a one-time message that bypasses the audioEnabled check
+        const goodbye = new SpeechSynthesisUtterance("System offline. Goodbye, Hitchhiker. I was tired of reading anyways.");
+        
+        // Match your Guide's voice settings
+        const britishVoice = getBritishVoice();
+        if (britishVoice) goodbye.voice = britishVoice;
+        goodbye.rate = 0.84;
+        goodbye.pitch = 0.70;
+
+        // Tell the browser to speak it
+        window.speechSynthesis.speak(goodbye);
+
+        // Wait for the speech to finish, THEN cancel the system
+        goodbye.onend = function() {
+            window.speechSynthesis.cancel();
+        };
+    }
+
+
+
+    }
+
+    function speak(title, content) {
+        if (!audioEnabled) return;
+        window.speechSynthesis.cancel(); 
+
+        const fullText = `${title}. ... ${content}`;
+        const msg = new SpeechSynthesisUtterance(fullText);
+        
+        const britishVoice = getBritishVoice();
+        if (britishVoice) msg.voice = britishVoice;
+
+        msg.rate = 0.84;   
+        msg.pitch = 0.70;  
+        msg.volume = 1.0;
+
+        window.speechSynthesis.speak(msg);
+    }
+
+    window.speechSynthesis.onvoiceschanged = getBritishVoice;
+
+    function playTone(freq, duration) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function runSync() {
+        const display = document.getElementById('content');
+        display.innerHTML = '<p class="flashing">Syncing Sub-Etha...</p>';
+        speak("Sub Etha Sync", "Establishing connection to the publishing houses of Ursa Minor.");
+        
+        setTimeout(() => {
+            display.innerHTML = '<div class="big-text enjoy-color">SHARE AND ENJOY</div>';
+            playTone(1100, 0.4);
+            speak("Status Update", "Share and enjoy.");
+        }, 7000); // Bumped up slightly more for safety
+    }
+
+    function runHelp() {
+        const display = document.getElementById('content');
+        const oldContent = display.innerHTML;
+        display.innerHTML = `
+            <div class="big-text panic-color flashing">DON'T PANIC</div>
+            <svg class="thumb-logo" viewBox="0 0 24 24"><path d="M2 20h2c.55 0 1-.45 1-1v-9c0-.55-.45-1-1-1H2v11zm19.83-7.12c.11-.36.17-.75.17-1.13 0-1.54-1.23-2.75-2.75-2.75h-5.07l.76-3.66.02-.24c0-.31-.13-.59-.33-.79L13.83 4 7.41 10.41C7.05 10.77 6.83 11.27 6.83 11.83v7.42c0 1.1.9 2 2 2h8.42c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1.99l-.42.42z"/></svg>
+        `;
+        playTone(440, 0.5);
+        speak("Emergency Protocol", "Don't panic.");
+        
+        setTimeout(() => { display.innerHTML = oldContent; }, 4500);
+    }
+
+    function typeWriter(text, elementId) {
+        let i = 0;
+        const element = document.getElementById(elementId);
+        function type() {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i);
+                i++;
+                typingTimer = setTimeout(type, 20);
+            }
+        }
+        type();
+    }
+
+    function showSuggestions(val) {
+        const suggBox = document.getElementById('suggestions');
+        suggBox.innerHTML = '';
+        if (!val) { suggBox.style.display = 'none'; return; }
+        const matches = Object.keys(entries).filter(k => k.startsWith(val.toLowerCase()));
+        if (matches.length > 0) {
+            suggBox.style.display = 'block';
+            matches.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.innerText = m;
+                div.onclick = () => selectEntry(m);
+                suggBox.appendChild(div);
+            });
+        } else { suggBox.style.display = 'none'; }
+    }
+
+    function selectEntry(key) {
+        playTone(880, 0.1);
+        document.getElementById('search-input').value = key;
+        document.getElementById('suggestions').style.display = 'none';
+        clearTimeout(typingTimer);
+        const display = document.getElementById('content');
+        display.innerHTML = `<div class="entry-title">${key}</div><div id="typing-text"></div>`;
+        typeWriter(entries[key], 'typing-text');
+        speak(key, entries[key]);
+    }
+
+    function randomEntry() {
+        const keys = Object.keys(entries);
+        selectEntry(keys[Math.floor(Math.random() * keys.length)]);
+    }
+</script>
+</body>
+</html>
