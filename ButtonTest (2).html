@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Guide Engine - Animation Sandbox</title>
+    <style>
+        :root {
+            --guide-green: #00ff41;
+            --guide-bg: #0a0a0a;
+            --panic-red: #ff0000;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: var(--guide-green);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        #guide-unit {
+            width: 100%;
+            max-width: 420px;
+            height: 90vh;
+            background-color: var(--guide-bg);
+            border: 3px solid #333;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        header {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 2px solid var(--guide-green);
+            background: #050505;
+        }
+
+        h1 { margin: 0; font-size: 1.4rem; text-transform: uppercase; }
+
+        #display-area {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            border-bottom: 1px solid var(--guide-green);
+        }
+
+        .entry-title { font-size: 1.2rem; text-decoration: underline; margin-bottom: 10px; text-transform: uppercase; }
+
+        /* --- CONTROLS PANEL --- */
+        #test-panel {
+            padding: 15px;
+            background: #050505;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            max-height: 40%;
+            overflow-y: auto;
+        }
+
+        .test-btn {
+            background: none;
+            border: 1px solid var(--guide-green);
+            color: var(--guide-green);
+            padding: 10px;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .test-btn:active {
+            background: var(--guide-green);
+            color: #000;
+        }
+
+        .test-btn.panic {
+            border-color: var(--panic-red);
+            color: var(--panic-red);
+        }
+        .test-btn.panic:active {
+            background: var(--panic-red);
+            color: #000;
+        }
+
+        /* --- CORE CSS KEYFRAMES FROM CLIENT --- */
+        @keyframes strobe {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 65, 0.2); border-color: #333; }
+            50% { box-shadow: 0 0 35px var(--panic-red); border-color: var(--panic-red); background-color: rgba(255, 0, 0, 0.1); }
+        }
+
+        @keyframes textJitter {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-1px, 1px); }
+            40% { transform: translate(1px, -1px); }
+            60% { transform: translate(-1px, -1px); }
+            80% { transform: translate(1px, 1px); }
+            100% { transform: translate(0, 0); }
+        }
+
+       /* Eye-Blink: Closes completely to pure black at the center, then snaps back open */
+	@keyframes slowBlink {
+    	    0% { opacity: 1; filter: blur(0px); }
+    	    45% { opacity: 0; filter: blur(4px); }   /* Eyelids closing, starting to blur */
+    	    50% { opacity: 0; filter: blur(10px); }  /* Total pitch black darkness / eyes shut tight */
+    	    55% { opacity: 0; filter: blur(4px); }   /* Starting to reopen */
+    	    100% { opacity: 1; filter: blur(0px); }  /* Snaps wide open back to normal vision! */
+	}
+
+        @keyframes drunkWobble {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(2deg) scale(1.02) translateY(3px); }
+            50% { transform: rotate(-2deg) scale(0.98) translateX(-3px); }
+            75% { transform: rotate(1deg) scale(1.01) translateY(-2px); }
+        }
+
+        @keyframes deepDespair {
+            0% { filter: grayscale(0%) brightness(1) contrast(1); transform: scale(1); }
+            100% { filter: grayscale(100%) brightness(0.4) contrast(1.5); transform: scale(0.95); }
+        }
+
+        .system-override {
+            font-family: inherit;
+            font-weight: bold;
+            animation: textJitter 0.1s infinite;
+        }
+/* --- EXTENDED ACTION ANIMATION STYLES --- */
+
+/* 1. Extended Screen Shake: Doubled the duration for a sustained rumble */
+@keyframes screenShake {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    10%, 30%, 50%, 70%, 90% { transform: translate(-6px, 3px) rotate(-1.5deg); }
+    20%, 40%, 60%, 80% { transform: translate(6px, -3px) rotate(1.5deg); }
+}
+
+/* 2. Slowed Warp + Mid-Way Shake: Stretched to 1.8 seconds with an unstable wobble at the 40% mark */
+@keyframes hyperspaceWarp {
+    0% { transform: scale(1) skewX(0deg); filter: blur(0px) brightness(1); opacity: 1; }
+    35% { transform: scale(1.08, 0.92) translate(-4px, 2px) skewX(-3deg); filter: brightness(1.3); } /* Mid-Warp Shudder Start */
+    45% { transform: scale(0.95, 1.05) translate(4px, -2px) skewX(3deg); filter: brightness(1.4); }  /* Mid-Warp Shudder End */
+    65% { transform: scale(1.1, 0.85) skewX(-8deg); filter: brightness(1.6); opacity: 1; }
+    100% { transform: scale(0.05, 6) skewX(45deg); filter: blur(15px) brightness(3); opacity: 0; }
+}
+/* Ultimate 28-second cinematic descent with maximum distant hover time */
+@keyframes fallingPlunge {
+    0% { 
+        transform: scale(1) rotate(0deg) translateY(0); 
+        filter: blur(0px); 
+        opacity: 1; 
+    }
+    /* 75% Mark: The Guide hits its tiny destination point early and slows its spin */
+    75% {
+        transform: scale(0.015) rotate(-2160deg) translateY(60px);
+        filter: blur(1px);
+        opacity: 0.9; /* Safe, visible, faraway dot */
+    }
+    /* 75% - 94%: HANG TIME. It floats silently in the distance while the ground lines type out */
+    94% {
+        transform: scale(0.012) rotate(-2300deg) translateY(80px);
+        filter: blur(1.5px);
+        opacity: 0.9;
+    }
+    /* 94% - 100%: The final fade to total darkness after the realization settles */
+    100% { 
+        transform: scale(0) rotate(-2340deg) translateY(140px); 
+        filter: blur(6px); 
+        opacity: 0; 
+    }
+}
+/* 4. Slowed Somersault: Stretched to 2.4 seconds so you can really feel the floaty loop-the-loop */
+@keyframes loopAndDrop {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    20% { transform: translate(-50px, 15px) rotate(-30deg); } /* Heavy pull to the left */
+    45% { transform: translate(25px, -40px) rotate(180deg); } /* Floating upside down */
+    70% { transform: translate(0, 0) rotate(360deg); }        /* Completing the spin loop */
+    100% { transform: translate(0, 100vh) rotate(430deg); }    /* Sudden plunging drop out the bottom */
+}
+
+/* --- EXTENDED SYSTEM TEST ANIMATIONS --- */
+/* --- THE WHITE-OUT STARFIELD CALIBRATION --- */
+.warp-starfield {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: #000000;
+    z-index: 99999;
+}
+
+/* The deep, slow-twinkling background stars */
+.background-stars {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 100px 150px, #fff, transparent),
+        radial-gradient(1px 1px at 200px 80px, #fff, transparent),
+        radial-gradient(2px 2px at 300px 250px, #fff, transparent),
+        radial-gradient(1px 1px at 50px 350px, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 250px 400px, #fff, transparent);
+    background-size: 400px 400px;
+    opacity: 0.5;
+    animation: galaxyTwinkle 4s ease-in-out infinite alternate;
+}
+
+.starfield-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    animation: masterFade 6s ease-in-out forwards;
+}
+
+.starfield-lines {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform-origin: center;
+    animation: speedTunnelLoop 0.6s linear infinite;
+}
+
+@keyframes galaxyTwinkle {
+    0% { opacity: 0.3; }
+    100% { opacity: 0.7; }
+}
+
+@keyframes masterFade {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes speedTunnelLoop {
+    0% { transform: scale(0.3); opacity: 0.1; filter: blur(2px); }
+    50% { opacity: 1; }
+    100% { transform: scale(4.5); opacity: 0; filter: blur(0px); }
+}
+/* 2. Glitch: Digital static horizontal shifting */
+@keyframes digitalGlitch {
+    0% { transform: translate(0, 0) skewX(0deg); filter: hue-rotate(0deg); }
+    10% { transform: translate(-4px, 2px) skewX(-10deg); filter: hue-rotate(90deg); }
+    20% { transform: translate(4px, -2px) skewX(10deg); }
+    30% { transform: translate(0, 0) skewX(0deg); filter: hue-rotate(0deg); }
+    100% { transform: translate(0, 0); }
+}
+
+/* 3. Panic: Hyper-fast unstable frame rattle */
+@keyframes ultimatePanic {
+    0%, 100% { transform: translate(0, 0); border-color: var(--panic-red); }
+    10% { transform: translate(-8px, -5px); background: rgba(255,0,0,0.1); }
+    30% { transform: translate(8px, 5px); }
+    50% { transform: translate(-5px, 8px); }
+    70% { transform: translate(5px, -8px); }
+    90% { transform: translate(-2px, -2px); }
+}
+
+}
+
+    </style>
+</head>
+<body>
+
+    <div id="guide-unit">
+        <header>
+            <h1>ACTION SANDBOX</h1>
+        </header>
+
+        <div id="display-area">
+            <div id="content">
+                <div class="entry-title">READY TO TEST</div>
+                <div id="typing-text">Tap an action module button below to execute.</div>
+            </div>
+        </div>
+
+        <div id="test-panel">
+            <button class="test-btn" onclick="Actions.say('This is a test of the subsurface verbal matrix script.')">1. Say</button>
+            <button class="test-btn" onclick="Actions.blackout()">2. Pure Blackout</button>
+	    <button class="test-btn" onclick="Actions.blackout('PERIL DETECTED.<br>LENSES DARKENED.')">🕶️ Glasses Test</button>
+            <button class="test-btn" onclick="Actions.redAlert()">3. Red Alert</button>
+            <button class="test-btn" onclick="Actions.systemOverload('CRITICAL CORE FAILURE', 'var(--panic-red)')">4. Overload</button>
+            <button class="test-btn" onclick="Actions.slowBlink()">5. Slow Blink</button>
+            <button class="test-btn" onclick="Actions.wobble()">6. Wobble</button>
+            <button class="test-btn" onclick="Actions.despair()">7. Despair</button>
+            <button class="test-btn panic" onclick="Actions.gameOver('YOU\'VE BEEN EATEN.')">☠️ Game Over</button>
+            <button class="test-btn" onclick="resetSandbox()" style="grid-column: span 2; border-color: #fff; color: #fff; margin-top: 5px;">🔄 Reset Sandbox View</button>
+	    <button class="test-btn" onclick="Actions.shake()">9. Extended Shake</button>
+	    <button class="test-btn" onclick="Actions.falling()">🐋 Whale Fall Simulation</button>
+	    <button class="test-btn" onclick="Actions.warp()">10. Starfield Warp</button>
+	    <button class="test-btn panic" onclick="Actions.somersault()">💫 Slow Somersault</button>
+	    <button class="test-btn" onclick="Actions.glitch()">14. Digital Glitch</button>
+	    <button class="test-btn" onclick="Actions.message('Sub-ether transmission received.')">15. Log Message</button>
+	    <button class="test-btn panic" onclick="Actions.panic()">⚠️ Panic Strobe</button>
+	    <button class="test-btn" onclick="Actions.hyperspaceWarp()"> spacewarp</button>
+        </div>
+    </div>
+
+    <script>
+        // Fake global tracker to keep standard functions from breaking during tests
+        let typingTimer = null;
+
+        // Simplified native audio engine simulation
+        function speak(title, text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const phrase = text || title;
+                const utterance = new SpeechSynthesisUtterance(phrase);
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+       function resetSandbox() {
+    window.speechSynthesis.cancel();
+    const unit = document.getElementById('guide-unit');
+    if (unit) unit.style.animation = "";
+    
+    // Scans the entire body to delete any and all curtains or jump overlays
+    const overlays = document.querySelectorAll('#game-over-curtain');
+    if (overlays) {
+        overlays.forEach(overlay => overlay.remove());
+    }
+    
+    const content = document.getElementById('content');
+    if (content) {
+        content.innerHTML = `<div class="entry-title">READY TO TEST</div><div id="typing-text">Tap an action module button below to execute.</div>`;
+    }
+}
+
+        // --- INTERACTIVE SYSTEM ANIMATIONS MODULE ---
+        const Actions = {
+            say: function(speechText) {
+                if (!speechText) return;
+                speak("", speechText);
+                
+                const body = document.getElementById('typing-text');
+                if (body) {
+                    const dialogueBox = document.createElement('div');
+                    dialogueBox.style = "margin-top: 15px; font-style: italic; color: #ffffff; border-left: 2px solid var(--guide-green); padding-left: 10px;";
+                    dialogueBox.innerHTML = speechText;
+                    body.appendChild(dialogueBox);
+                }
+            },
+
+           // 2. Blackout: Full-screen environmental blindness
+    	blackout: function(customHTML) {
+        // Find the HTML body so we can cover the ENTIRE screen, bypassing the Guide unit container
+        const targetElement = document.body;
+        if (!targetElement) return;
+        
+        const overlay = document.createElement('div');
+        overlay.id = "game-over-curtain"; // Reuses the reset hook for easy clearing
+        
+        // fixed position at 100vw and 100vh guarantees it covers absolutely everything on mobile
+        overlay.style = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000000; z-index:99999; display:flex; align-items:center; justify-content:center; color:white; text-align:center; font-weight:bold; font-family:inherit; font-size:1.2rem; padding:20px; box-sizing:border-box;";
+        
+        // If text is provided (like for the sunglasses), show it. Otherwise, it stays pure black!
+        if (customHTML) {
+            overlay.innerHTML = customHTML;
+        }
+        
+        targetElement.appendChild(overlay);
+        
+        // Auto-remove after 5 seconds to return to the Guide
+        setTimeout(() => { if (overlay) overlay.remove(); }, 5000);
+    },
+
+            redAlert: function() {
+                const unit = document.getElementById('guide-unit');
+                if (!unit) return;
+                unit.style.animation = "strobe 0.3s infinite";
+                setTimeout(() => { unit.style.animation = ""; }, 4000);
+            },
+
+            systemOverload: function(messageText, customColor) {
+                const body = document.getElementById('typing-text');
+                if (!body) return;
+                const targetColor = customColor || "var(--panic-red)";
+                const alertBox = document.createElement('div');
+                alertBox.className = "system-override";
+                alertBox.style = `margin-top: 25px; color: ${targetColor}; border: 1px dashed ${targetColor}; padding: 15px; text-transform: uppercase; font-size: 1.2rem; text-align: center;`;
+                alertBox.innerText = messageText;
+                body.appendChild(alertBox);
+            },
+
+            slowBlink: function() {
+                const unit = document.getElementById('guide-unit');
+                if (!unit) return;
+                unit.style.animation = "slowBlink 2s ease-in-out 2";
+                setTimeout(() => { unit.style.animation = ""; }, 4000);
+            },
+
+            wobble: function() {
+                const unit = document.getElementById('guide-unit');
+                if (!unit) return;
+                unit.style.animation = "drunkWobble 3s ease-in-out infinite";
+                setTimeout(() => { unit.style.animation = ""; }, 6000);
+            },
+
+            despair: function() {
+                const unit = document.getElementById('guide-unit');
+                if (!unit) return;
+                unit.style.animation = "deepDespair 5s ease-in-out forwards";
+            },
+
+           // 8. Game Over: Red Alert Freakout -> Total Environmental Blackout -> Red Text
+    gameOver: function(customMessage) {
+        Actions.redAlert();
+        
+        const display = document.getElementById('content');
+        if (display) display.innerHTML = ""; 
+
+        setTimeout(() => {
+            const targetElement = document.body; // Break out to full screen!
+            if (!targetElement) return;
+            
+            const curtain = document.createElement('div');
+            curtain.id = "game-over-curtain";
+            curtain.style = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000000; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;";
+            targetElement.appendChild(curtain);
+            
+            const giantTextBox = document.createElement('div');
+            giantTextBox.style = "color:var(--panic-red); font-family:inherit; font-size:3.2rem; font-weight:bold; text-align:center; text-transform:uppercase; line-height:1.2; animation: textJitter 0.15s infinite; max-width: 90%;";
+            curtain.appendChild(giantTextBox);
+            
+            const finalWords = customMessage || "YOU'VE BEEN EATEN.";
+            let charIndex = 0;
+            
+            function typeFinalWords() {
+                if (charIndex < finalWords.length) {
+                    giantTextBox.innerHTML += finalWords.charAt(charIndex);
+                    charIndex++;
+                    setTimeout(typeFinalWords, 120);
+                }
+            }
+            typeFinalWords();
+        }, 1500);
+    },
+
+// 9. Shake: Extended to give a longer, more satisfying impact
+    shake: function() {
+        const unit = document.getElementById('guide-unit');
+        if (!unit) return;
+        unit.style.animation = "screenShake 0.8s ease-in-out"; // Lasts longer!
+        setTimeout(() => { unit.style.animation = ""; }, 850);
+    },
+
+    // 10. Warp: Adjusted time window for the slower breakdown transition
+    hyperspaceWarp: function() {
+        const unit = document.getElementById('guide-unit');
+        if (!unit) return;
+        unit.style.animation = "hyperspaceWarp 1.8s cubic-bezier(0.45, -0.15, 0.8, 0.15) forwards";
+    },
+// 11. Rebuilt Falling: 28-Second Climax Precision Monologue
+    falling: function() {
+        const unit = document.getElementById('guide-unit');
+        const targetElement = document.body;
+        if (!unit || !targetElement) return;
+        
+        // 1. Trigger the master 28-second hang-time animation
+        unit.style.animation = "fallingPlunge 28s cubic-bezier(0.2, 0.3, 0.3, 1) forwards";
+        
+        // 2. Create the transparent overlay wrapper
+        const thoughtsOverlay = document.createElement('div');
+        thoughtsOverlay.id = "game-over-curtain";
+        thoughtsOverlay.style = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:transparent; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:35px; box-sizing:border-box; pointer-events:none; transition: background 2.5s ease-in-out;";
+        
+        const textContainer = document.createElement('div');
+        textContainer.style = "color:#ffffff; font-family:inherit; font-size:1.1rem; font-weight:normal; text-align:left; text-transform:uppercase; max-width: 380px; line-height: 1.6; text-shadow: 0 0 8px #000000, 0 0 3px #000000;";
+        thoughtsOverlay.appendChild(textContainer);
+        targetElement.appendChild(thoughtsOverlay);
+        
+       // ⚡ RECUBED TIMING: Extra breathing room added right after the 2nd sentence!
+        const thoughts = [
+            { text: "Ah...! What's happening? ", time: 0 },
+            { text: "Er, excuse me, who am I? ", time: 1500 },
+            
+            // 🧠 --- THE FIX ---
+            { text: "Hello? ", time: 4100 },                  // Slid back from 3500 to let sentence 2 finish cleanly
+            { text: "Why am I here? What's my purpose in life? ", time: 5400 }, // Slid back to maintain a natural flow
+            
+            // Rejoining your established rhythm smoothly
+            { text: "And wow! Hey! ", time: 8500 },
+            { text: "What's this thing suddenly coming towards me very fast? ", time: 9800 }, 
+            { text: "Very very fast. ", time: 13000 },
+            { text: "It's so big and flat and round, ", time: 14800 }, 
+            
+            // --- THE CLIMAX EXTENSION (Perfected spacing) ---
+            { text: "it needs a big wide sounding name like... ", time: 17200 }, 
+            { text: "ow... ound... round... ground! ", time: 20800 },        
+            { text: "That's it! That's a good name... ground!", time: 24200 } 
+        ];
+        
+       // Append text chunk by chunk and route to the clean speech engine
+        thoughts.forEach(phrase => {
+            setTimeout(() => {
+                if (textContainer) {
+                    textContainer.innerHTML += phrase.text; 
+                    
+                    // ⚡ THE FIX: Use 'phrase.text' to match our loop variable perfectly!
+                    Actions.say(phrase.text); 
+                }
+            }, phrase.time);
+        });
+        
+        // 4. THE TRANSITION: Smoothly dissolves to black at 28.5 seconds (4 seconds after the final word)
+        setTimeout(() => {
+            thoughtsOverlay.style.background = "#000000";
+            if (textContainer) {
+                textContainer.style.transition = "opacity 2s ease-out";
+                textContainer.style.opacity = "0";
+            }
+        }, 28500);
+    },
+   // 12. Somersault: Adjusted time window for the slower zero-g spin cycle
+    somersault: function() {
+        const unit = document.getElementById('guide-unit');
+        if (!unit) return;
+        unit.style.animation = "loopAndDrop 2.4s ease-in forwards";
+    },
+
+  // 10. Rebuilt High-Velocity Warp: Pure White Starfield Edition
+   // 10. Rebuilt Warp: Invisible Large Source Aperture Tunnel
+    warp: function() {
+        const targetElement = document.body;
+        if (!targetElement) return;
+
+        const warpContainer = document.createElement('div');
+        warpContainer.id = "game-over-curtain";
+        warpContainer.className = "warp-starfield";
+        
+        // Notice how x1 and y1 are no longer 50%. They start at the edge of an invisible inner circle!
+        warpContainer.innerHTML = `
+            <div class="background-stars"></div>
+
+            <div class="starfield-container">
+                <div class="starfield-lines">
+                    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                        <g stroke="#ffffff" stroke-width="2.5" stroke-dasharray="25 30">
+                            <line x1="40%" y1="40%" x2="0%" y2="0%" />
+                            <line x1="60%" y1="40%" x2="100%" y2="0%" />
+                            <line x1="40%" y1="60%" x2="0%" y2="100%" />
+                            <line x1="60%" y1="60%" x2="100%" y2="100%" />
+                            
+                            <line x1="50%" y1="35%" x2="50%" y2="0%" />
+                            <line x1="50%" y1="65%" x2="50%" y2="100%" />
+                            <line x1="35%" y1="50%" x2="0%" y2="50%" />
+                            <line x1="65%" y1="50%" x2="100%" y2="50%" />
+                        </g>
+                    </svg>
+                </div>
+                
+                <div class="starfield-lines" style="animation-delay: 0.3s; transform: rotate(20deg);">
+                    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                        <g stroke="#ffffff" stroke-width="1.5" stroke-dasharray="15 40" opacity="0.6">
+                            <line x1="42%" y1="38%" x2="20%" y2="0%" />
+                            <line x1="58%" y1="38%" x2="80%" y2="0%" />
+                            <line x1="38%" y1="45%" x2="0%" y2="25%" />
+                            <line x1="62%" y1="45%" x2="100%" y2="25%" />
+                            <line x1="38%" y1="55%" x2="0%" y2="75%" />
+                            <line x1="62%" y1="55%" x2="100%" y2="75%" />
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        `;
+
+        targetElement.appendChild(warpContainer);
+
+        // Standard 6-second immersion timer
+        setTimeout(() => {
+            if (warpContainer) warpContainer.remove();
+        }, 6000); 
+    },
+  
+    // 14. Glitch: Quick structural distortion shockwave
+    glitch: function() {
+        const unit = document.getElementById('guide-unit');
+        if (!unit) return;
+        unit.style.animation = "digitalGlitch 0.4s ease-in-out infinite";
+        // Runs quick static bursts, then stabilizes automatically
+        setTimeout(() => { unit.style.animation = ""; }, 800);
+    },
+
+    // 15. Message: Simple UI System Banner Announcement
+    message: function(bannerText) {
+        const body = document.getElementById('typing-text');
+        if (!body) return;
+        const msgBox = document.createElement('div');
+        msgBox.style = "margin-top: 15px; padding: 10px; background: #111; border: 1px solid var(--guide-green); color: var(--guide-green); text-transform: uppercase; text-align: center; font-size: 0.85rem;";
+        msgBox.innerText = bannerText || "LOG: END OF ENTRIES REACHED.";
+        body.appendChild(msgBox);
+    },
+
+    // 16. Panic: Aggressive framing shake that flashes the interface red
+    panic: function() {
+        const unit = document.getElementById('guide-unit');
+        if (!unit) return;
+        unit.style.animation = "ultimatePanic 0.15s infinite";
+        setTimeout(() => { unit.style.animation = ""; }, 2000); // Shakes hard for 2 seconds
+    }
+};
+
+    </script>
+</body>
+</html>

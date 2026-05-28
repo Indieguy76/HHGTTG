@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>The Hitchhiker's Guide to the Galaxy</title>
+    <style>
+        :root {
+            --guide-green: #00ff41;
+            --guide-bg: #0a0a0a;
+            --panic-red: #ff0000;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: var(--guide-green);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+     #guide-unit {
+    width: 95vw;
+    max-width: 420px;
+    /* dvh adapts to the mobile browser's address bar automatically */
+    height: calc(100dvh - 15px - env(safe-area-inset-bottom)); 
+    margin-top: 5px; 
+    margin-bottom: env(safe-area-inset-bottom);
+    background-color: var(--guide-bg);
+    border: 3px solid #333;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+        header {
+            padding: 16px;
+            text-align: center;
+            border-bottom: 2px solid var(--guide-green);
+            background: #050505;
+        }
+
+        h1 { margin: 0; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 1.5px; }
+
+        #search-container { 
+            padding: 6px; 
+            display: flex; 
+            gap: 6px;
+            position: relative; 
+        }
+	
+	#search-container input::placeholder {
+    	color: #00ff41;
+    	opacity: 1;
+}
+
+        #clear-btn {
+    background: #000;
+    border: 1px solid var(--guide-green);
+    color: var(--guide-green);
+    padding: 5px 15px;
+    font-family: 'Courier New', Courier, monospace;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+        #clear-btn:active {
+    background: var(--guide-green);
+    color: #000;
+}
+
+        input {
+            flex-grow: 1;
+            padding: 10px;
+            background: #000;
+            border: 1px solid var(--guide-green);
+            color: var(--guide-green);
+            font-size: 1rem;
+            outline: none;
+            border-radius: 0;
+            -webkit-appearance: none;
+        }
+
+        #voice-btn {
+            background: #000;
+            border: 1px solid var(--guide-green);
+            color: var(--guide-green);
+            padding: 5px 8px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .voice-on { background: var(--guide-green) !important; color: #000 !important; }
+
+        #suggestions {
+            position: absolute;
+            top: 55px;
+            left: 10px;
+            width: calc(100% - 20px);
+            background: #000;
+            border: 1px solid var(--guide-green);
+            z-index: 100;
+            display: none;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .suggestion-item { padding: 12px; border-bottom: 1px solid #111; text-transform: uppercase; cursor: pointer; font-size: 0.9rem; }
+
+        #display-area {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .entry-title { 
+            font-size: 1.4rem; 
+            text-decoration: underline; 
+            margin-bottom: 12px; 
+            color: var(--guide-green); 
+            text-transform: uppercase; 
+        }
+
+	@keyframes shake {
+  	10%, 90% { transform: translate3d(-1px, 0, 0); }
+  	20%, 80% { transform: translate3d(2px, 0, 0); }
+  	30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  	40%, 60% { transform: translate3d(4px, 0, 0); }
+	}
+
+	.guide-button {
+    	/* Your existing button styles here */
+   	 border: 1px solid var(--guide-green);
+    	background: transparent;
+    	color: var(--guide-green);
+    	padding: 10px;
+    	text-transform: uppercase;
+	}
+
+        /* Slower, more readable pulse */
+	.flashing { 
+    	    animation: blink 3s infinite; 
+	}
+
+	@keyframes blink { 
+    	    0%, 100% { opacity: 1; } 
+    	    50% { opacity: 0.3; } 
+	}
+
+/* New jitter animation for the whole unit */
+	.glitch-unit {
+    	    animation: jitter-screen 0.6s infinite;
+	}
+
+	@keyframes jitter-screen {
+    	   0% { transform: translate(0,0); }
+    	   25% { transform: translate(1px, -1px); filter: contrast(1.2); }
+    	   50% { transform: translate(-1px, 1px); }
+    	   75% { transform: translate(1px, 1px); filter: contrast(0.9); }
+    	   100% { transform: translate(0,0); }
+}
+
+        .big-text {
+            font-size: 4.2rem;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 40px;
+            line-height: 1.2;
+        }
+
+        .panic-color { color: var(--panic-red); }
+        .enjoy-color { color: var(--guide-green); }
+
+        .thumb-logo {
+            width: 130px;
+            height: 130px;
+            margin: 20px auto;
+            display: block;
+            fill: var(--guide-green);
+        }
+
+      .footer-nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px;
+    /* Increased the bottom buffer slightly */
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--guide-green);
+    background: #050505;
+}
+
+        .nav-btn {
+            background: none;
+            border: 1px solid var(--guide-green);
+            color: var(--guide-green);
+            padding: 10px 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .nav-btn:active { background: var(--guide-green); color: #000; }
+
+	#top-nav {
+    	padding: 10px;
+    	border-bottom: 1px solid var(--guide-green);
+    	display: flex;
+    	align-items: center;
+	}
+
+	#volume-selector {
+    	background: black;
+    	color: var(--guide-green);
+    	border: 1px solid var(--guide-green);
+    	font-family: inherit;
+    	padding: 5px;
+    	flex-grow: 1;
+    	margin-left: 10px;
+	}
+
+	#emergency-kit {
+    		display: none; 
+    		position: absolute; 
+    		bottom: 120px; 
+    		left: 0; 
+    		width: 100%; 
+    		justify-content: center; 
+    		gap: 50px; 
+    		z-index: 200;
+	}
+
+	.power-bar {
+   		width: 80%;
+    		height: 10px;
+   		border: 1px solid var(--guide-green);
+    		margin: 10px auto;
+    		position: relative;
+	}
+
+	.power-fill {
+    		height: 100%;
+    		background: var(--guide-green);
+    		width: 100%;
+    		animation: drain 7s linear forwards;
+	}
+
+	@keyframes drain {
+    		0% { width: 100%; }
+    		25% { width: 30%; }
+    		100% { width: 0%; }
+	}
+
+	.reroute-text {
+    	font-size: 0.8rem;
+    	text-align: center;
+    	animation: blink 0.4s infinite;
+	}
+
+	@keyframes slowBlink {
+  	0% { transform: scaleY(1); }
+  	45% { transform: scaleY(0.01); background: #000; }
+  	55% { transform: scaleY(0.01); background: #000; }
+  	100% { transform: scaleY(1); }
+	}
+
+	@keyframes drunkWobble {
+  	0% { transform: rotate(0deg) scale(1); filter: blur(0px) opacity(1); }
+ 	25% { transform: rotate(2deg) scale(1.02); filter: blur(1px) opacity(0.8); }
+  	50% { transform: rotate(-2deg) scale(0.98); filter: blur(2px) opacity(0.6); }
+  	75% { transform: rotate(1deg) scale(1.01); filter: blur(1px) opacity(0.8); }
+  	100% { transform: rotate(0deg) scale(1); filter: blur(0px) opacity(1); }
+	}
+
+	/* The Panic Strobe */
+	@keyframes strobe {
+    	0% { background-color: var(--guide-bg); }
+    	50% { background-color: #330000; }
+    	100% { background-color: var(--guide-bg); }
+	}
+
+	/* The Improbability Warp */
+	@keyframes warp {
+    	0% { transform: scale(1); filter: hue-rotate(0deg); }
+    	50% { transform: scale(1.05, 0.95) hue-rotate(90deg); }
+    	100% { transform: scale(1); filter: hue-rotate(0deg); }
+	}
+
+	/* The Scanline */
+	@keyframes scanline {
+    	0% { top: 0%; }
+    	100% { top: 100%; }
+	}
+
+	@keyframes flicker {
+  	0% { opacity: 1; }
+  	50% { opacity: 0.3; }
+  	100% { opacity: 1; }
+	}
+
+	@keyframes despair {
+  	0% { filter: grayscale(0%); }
+  	50% { filter: grayscale(100%); }
+  	100% { filter: grayscale(0%); }
+	}
+
+	@keyframes glitch {
+  	0% { transform: translate(0); }
+  	20% { transform: translate(-5px, 5px); }
+  	40% { transform: translate(-5px, -5px); }
+  	60% { transform: translate(5px, 5px); }
+  	80% { transform: translate(5px, -5px); }
+  	100% { transform: translate(0); }
+	}
+
+	@keyframes fallingPlunge {
+    	0% { transform: translateY(0) scale(1); filter: blur(0px); opacity: 1; }
+    	30% { transform: translateY(-20px); filter: blur(1px); }
+    	100% { transform: translateY(100vh) scale(0.9); filter: blur(8px); opacity: 0; }
+	}
+	/* Custom terminal style for severe system overrides */
+	.system-override {
+    	font-family: 'Arial Black', Gadget, sans-serif !important;
+    	font-weight: bold;
+    	letter-spacing: 2px;
+    	line-height: 1.8;
+	}
+
+
+    </style>
+</head>
+<body>
+
+<div id="guide-unit">
+    <header>
+        <h1>The Hitchhiker's Guide to the Galaxy</h1>
+    </header>
+
+    <div id="search-container">
+    <input type="text" id="search-input" placeholder="Search..." autocomplete="off" oninput="showSuggestions(this.value)">
+    <button id="clear-btn" onclick="clearSearch()">X</button> 
+    <button id="voice-btn" onclick="toggleAudio()">VOICE: OFF</button>
+    <div id="suggestions"></div>
+</div>
+
+<div id="top-nav">
+    <span class="volume-label">VOL:</span>
+    <select id="volume-selector" onchange="filterByVolume(this.value)">
+        <option value="all">THE GUIDE</option>
+        <option value="1">I: PRIMARY PHASE</option>
+        <option value="2">II: SECONDARY PHASE</option>
+        <option value="3">III: TERTIARY PHASE</option>
+    </select>
+</div>
+
+    <div id="display-area">
+        <div id="content">
+            <div class="entry-title">SYSTEM READY</div>
+            <p>Awaiting Hitchhiker input...</p>
+        </div>
+    </div>
+
+    <div id="emergency-kit">
+    	<button class="nav-btn" onclick="towelAction()">TOWEL</button>
+    	<button class="nav-btn" onclick="teaAction()">TEA</button>
+</div>
+
+    <div class="footer-nav">
+        <button class="nav-btn" onclick="runSync()">SYNC</button>
+        <button class="nav-btn" onclick="randomEntry()">RANDOM</button>
+        <button class="nav-btn" onclick="runHelp()">HELP</button>
+    </div>
+</div>
+
+<script>
+    const entries = {
+   
+    "infinite improbability drive": {
+volume: 1,
+text: "A wonderful new method of crossing interstellar distances without the tedious mucking about in hyperspace. It allows a ship to pass through every conceivable point in every conceivable universe simultaneously. It's not impossible, just highly improbable.",
+buttons: []
+},
+    "the whale": {
+volume: 1,
+text: "A sperm whale called into existence several miles above Magrathea by an Infinite Improbability Drive. Its brief life was spent wondering if the ground would be its friend, shortly before discovering that the ground was in fact very firm.",
+buttons: []
+},
+    "eddie": {
+Volume:1,
+text: "The shipboard computer for the Heart of Gold. His overwhelming enthusiasm and lust for life are a constant source of irritation to the crew, proving that even silicon can be insufferably cheerful.",
+buttons: []
+},
+    "magrathea": {
+volume: 1,
+text: "An ancient planet in the Horsehead Nebula that specialized in the luxury trade of custom-made, planet-building. It was so successful that it had reduced the rest of the galaxy to abject poverty.",
+buttons: []
+},
+    "deep thought": {
+volume: 1,
+text: "A supercomputer created by hyper-intelligent pan-dimensional beings to calculate the Answer to the Ultimate Question of Life the Universe and Everything.",
+buttons: []
+},
+      "arthur dent": {
+volume: 1,
+text: "A man who never quite got the hang of Thursdays. He is known for making a decent sandwich and for spending most of his life in a dressing gown following the untimely demolition of his planet.",
+buttons: []
+},
+   "arthur dent's house": {
+volume: 1,
+text: "A squattish, squarish building that exactly failed to please the eye. It was demolished to make way for a bypass, a fate it shared with the planet it sat upon.",
+buttons: []
+},
+  "mr. l. prosser": {
+volume: 1,
+text: "A council employee and direct descendant of Genghis Khan. His only visible traits of this warrior lineage are a stout stomach and a fondness for fur hats that make him look slightly ridiculous.",
+buttons: []
+},
+   "ford prefect": {
+volume: 1,
+text: "A roving researcher for the Guide who spent fifteen years on Earth pretending to be an out-of-work actor. He is an unruly boozer from a small planet in the vicinity of Betelgeuse.",
+buttons: []
+},
+  "zaphod beeblebrox": {
+volume: 1,
+text: "A man with two heads, three arms, and an ego that requires its own zip code. He is the only man to survive the Total Perspective Vortex, mostly because his ego is larger than the universe itself.",
+buttons: []
+},
+   "trillian - tricia mcmillan": {
+volume: 1,
+text: "A brilliant mathematician who left Earth with Zaphod because he happened to have a spaceship and she happened to be bored. She is the only other human survivor of Earth's demolition.",
+buttons: []
+},
+  "marvin": {
+volume: 1,
+text: "A 'Genuine People Personality' prototype with a brain the size of a planet and a personality like a damp Monday in November. He holds deep contempt for all organic life and spends his time being depressed about everything.",
+buttons: []
+},
+  "pan galactic gargle blaster": {
+volume: 1,
+text: "An alcoholic drink whose effect is like having your brains smashed out by a slice of lemon wrapped round a large gold brick. It is highly recommended, provided you don't have anything important to do for the next several weeks.",
+buttons: []
+},
+  "vogon poetry": {
+volume: 1,
+text: "The third worst in the Universe. The second worst is that of the Azagoths of Kria.. It is employed by Vogons as a mild form of torture, though most victims would prefer the actual physical torture if given the choice.The very worst poetry of all perished along with its creator Paula Nancy Millstone Jennings of Greenbridge, Essex, England in the destruction of the planet Earth.",
+buttons: []
+},
+  "vogon constructor fleet": {
+volume: 1,
+text: "Impossibly huge yellow somethings that hang in the sky in the same way that bricks don't. They are responsible for clearing hyperspace bypasses with all the charm and efficiency of a lead pipe.",
+buttons: []
+},
+  "space": {
+volume: 1,
+text: "Space is big. You just won't believe how vastly, hugely, mind-bogglingly big it is. Interstellar distances do not fit into the human imagination, which is why most people don't bother imagining them.. I mean you may think it's a long way down the road to the chemist, but that's just peanuts to space. ",
+buttons: []
+},
+  "42": {
+volume: 1,
+text: "The Answer to the Ultimate Question of Life, the Universe, and Everything. It is a very solid answer, though it would be more helpful if anyone actually knew what the question was.",
+buttons: []
+},
+  "bowl of petunias": {
+volume: 1,
+text: "A byproduct of the Infinite Improbability Drive that spent its very short life falling out of the sky toward Magrathea. Its final thought, Oh no! not again! Suggests it knew something about the universe that the rest of us clearly don't.",
+buttons: []
+},
+  "vogons": {
+volume: 1,
+text: "Thick-willed, slug-brained, and stubborn. They are the backbone of the Galactic Civil Service and are not so much evil as they are mind-bogglingly bureaucratic. On no account allow one to read poetry at you, as it is used as a form of mid-level administrative torture.",
+buttons: []
+},
+   "heart of gold": {
+volume: 1,
+text: "A groundbreaking starship shaped like a sleek running shoe. It is the first spacecraft in history to be powered by the Infinite Improbability Drive, making it both the most advanced and the most unpredictable vehicle in existence.",
+buttons: []
+},
+   "slartibartfast": {
+volume: 1,
+text: "An award-winning designer of planets from Magrathea who specializes in coastlines. He is particularly fond of the fjords he designed for Norway, noting they give the planet a lovely 'crinkly' edge.",
+buttons: []
+},
+   "babel fish": {
+volume: 1,
+text: "Small, yellow, and leech-like. By sticking one in your ear, you can instantly understand any language spoken to you. It has effectively caused more and bloodier wars than anything else in history by removing all natural misunderstandings.",
+buttons: []
+},
+   "towel": {
+volume: 1,
+text: "The most massively useful thing an interstellar hitchhiker can have. A man who’s crossed the width and breath of the  galaxy and still knows where his towel is. iIs—and can use it for anything from chemical steam protection to a distress signal—is a man to be reckoned with.",
+buttons: []
+},
+   "horse and groom": {
+volume: 1,
+text: "The pub where Arthur and Ford prepare for the end of the world. and for their travels, with Tthree pints of bitter is the recommended dosage to settle the system before being teleported into a Vogon hold and peanuts.",
+buttons: []
+},
+   "dentrassis": {
+volume: 1,
+text: "An unruly tribe of gourmands who serve as catering staff on Vogon fleets.They love Vogon money but hate Vogons, and are always willing to help hitchhikers just to be annoying to their employers.",
+buttons: []
+},
+   "barnard's star": {
+volume: 1,
+text: "A star system six light-years away from Earth. Ford Prefect considers this a nearby and convenient destination for hitching a lift, assuming you aren't picky about the legroom.",
+buttons: []
+},
+   "sub-etha sens-o-matic": {
+volume: 1,
+text: "An electronic device used to monitor sub-etha signals. It alerts hitchhikers to passing spacecraft, usually just in time to realize they've forgotten their towel.",
+buttons: []
+},
+   "electronic thumb": {
+volume: 1,
+text: "A signaling device used for hitching a lift in deep space. It's much more effective than a literal thumb, which tends to go unnoticed by ships traveling at hyperspace speeds.",
+buttons: []
+},
+   "bypasses": {
+volume: 1,
+text: "Devices that allow people to drive very fast between two points while the people in the middle wonder why everyone is so keen to leave. They are the primary reason for the unexpected demolition of planets.",
+buttons: []
+},
+   "earth":  {
+volume: 1,
+text: "Mostly harmless.",
+buttons: []
+},
+  "the guide": {
+volume: 1,
+text: "A wholly remarkable book, perhaps the most remarkable ever to come out of the great publishing houses of Ursa Minor. It has the words DON'T PANIC inscribed in large, friendly letters on its cover.",
+buttons: []
+},
+   "the earth-mark two": {
+volume: 1,
+text: "A copy of the original supercomputer that was built by the Magrathean’s, after the original was destroyed to make way for a hyperspace bypass.",
+buttons: []
+},
+   "the mice - benji and frankie mouse": {
+volume: 1,
+text: "Pan-dimensional beings looking to cash in on finding the Question to the Ultimate answer to Life, the Universe and everything. They also fancy themselves as brain collectors.",
+buttons: []
+},
+    "the milliard gargantubrain": {
+volume: 1,
+text: "A computer so powerful it can count all the atoms in a given star in a millisecond. A mere abacus compared to the supercomputer DeepThought.",
+buttons: []
+},
+    "the googleplex star thinker": {
+volume: 1,
+text: "A computer in the Seventh Galaxy of Light and Ingenuity which can calculate the trajectory of every single dust particle throughout a five week long Dangrabad Beta sand blizzard.",
+buttons: []
+},
+    "lunkwill and fook": {
+volume: 1,
+text: "Programers, who represented a race of hyperintelligent pan-­dimensional beings. Which were so fed up with the constant bickering about the meaning of life they built a supercomputer the size of a small city, to find the answer to Life, The Universe and Everything.",
+buttons: []
+},
+    "majikthise and vroomfondel": {
+volume: 1,
+text: "Philosophers, representing the Amalgamated Union of Philosophers, Sages, Luminaries and other Thinking Persons. They demand rigidly defined areas of doubt and uncertainty and the deactivation of DeepThought.",
+buttons: []
+},
+   "arcturan megafreighters": {
+volume: 1,
+text: "used to carry most of the bulky trade between the Galactic Centre and the outlying regions. Once plundered by young Zaphod and Ford Prefect for Conkers.",
+buttons: []
+},
+   "galatic cops": {
+volume: 1,
+text: "Dumb two-­bit trigger-­pumping morons with low hairlines, little piggy eyes, that you'd probably quite like if you met them socially. Tasked with arresting Zaphod Beeblebrox with Kill-O-Zap guns.",
+buttons:[]
+},
+   "infinity": {
+volume: 1,
+text: "Bigger than the biggest thing ever and then some. Much bigger than that, in fact. Really amazingly immense. Infinity is so large that, by comparison, bigness itself looks really titchy and should probably go and have a lie-down.",
+Buttons:[]
+}, 
+   "population of the universe": {
+volume: 1,
+text: "Exactly zero. Since the universe is infinite and the number of populated worlds is finite, any finite number divided by infinity is as close to zero as makes no odds. Therefore, everyone you meet is merely a figment of an overactive imagination.",
+buttons: []
+},
+  "oolon colluphid": {
+volume: 1,
+text: "The author of the philosophical blockbusters 'Where God Went Wrong and 'Who is this God Person Anyway?' His works are highly popular among people who enjoy being confused at a very high level.",
+buttons: []
+},
+
+};
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let typingTimer;
+    let audioEnabled = false;
+
+    function clearSearch() {
+    document.getElementById('guide-unit').classList.remove('glitch-unit'); 
+    hideEmergencyKit();
+
+    // 2. Clear the text and hide suggestions
+    const input = document.getElementById('search-input');
+    const suggBox = document.getElementById('suggestions');
+    input.value = ''; 
+    suggBox.style.display = 'none'; 
+    
+    // 3. Reset the screen back to the "System Ready" message
+    const display = document.getElementById('content');
+    display.innerHTML = `
+        <div class="entry-title">SYSTEM READY</div>
+        <p>Awaiting Hitchhiker input...</p>
+    `;
+
+    // 4. Put the blinking cursor back in the box
+    input.focus(); 
+
+    // Optional: Play a "reset" tone
+    if (typeof playTone === "function") playTone(220, 0.1); 
+}
+
+    function getBritishVoice() {
+        const voices = window.speechSynthesis.getVoices();
+        return voices.find(v => v.lang === 'en-GB' && v.name.includes('Google')) || 
+               voices.find(v => v.lang === 'en-GB') || 
+               voices[0]; 
+    }
+
+    function toggleAudio() {
+    audioEnabled = !audioEnabled;
+    const btn = document.getElementById('voice-btn');
+    btn.innerText = `VOICE: ${audioEnabled ? 'ON' : 'OFF'}`;
+
+    if (audioEnabled) {
+        btn.classList.add('voice-on');
+        speak("System online", "The Hitchhiker's Guide to the Galaxy voice interface is now active.");
+        } else {
+        btn.classList.remove('voice-on');
+
+        // Create a one-time message that bypasses the audioEnabled check
+        const goodbye = new SpeechSynthesisUtterance("System offline. I was tired of reading aloud anyways.");
+        
+        // Match your Guide's voice settings
+        const britishVoice = getBritishVoice();
+        if (britishVoice) goodbye.voice = britishVoice;
+        goodbye.rate = 0.84;
+        goodbye.pitch = 0.70;
+
+        // Tell the browser to speak it
+        window.speechSynthesis.speak(goodbye);
+
+        // Wait for the speech to finish, THEN cancel the system
+        goodbye.onend = function() {
+            window.speechSynthesis.cancel();
+        };
+
+    }
+
+}
+    function speak(title, content) {
+        if (!audioEnabled) return;
+        window.speechSynthesis.cancel(); 
+
+        const fullText = `${title}. ... ${content}`;
+        const msg = new SpeechSynthesisUtterance(fullText);
+        
+        const britishVoice = getBritishVoice();
+        if (britishVoice) msg.voice = britishVoice;
+
+        msg.rate = 0.87;   
+        msg.pitch = 0.75;  
+        msg.volume = 1.0;
+
+        window.speechSynthesis.speak(msg);
+    }
+
+    window.speechSynthesis.onvoiceschanged = getBritishVoice;
+
+    function playTone(freq, duration) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+	
+    
+function runSync() {
+    const display = document.getElementById('content');
+    const unit = document.getElementById('guide-unit');
+    hideEmergencyKit();
+    
+    unit.classList.add('glitch-unit');
+    
+    display.innerHTML = `
+        <div class="entry-title flashing">SUB-ETHA CONNECTION</div>
+        <p class="reroute-text" style="color: var(--panic-red); text-align: center;">CRITICAL POWER DRAIN: REROUTING...</p>
+        <div class="power-bar"><div class="power-fill"></div></div>
+        <p style="font-size: 1.0rem; text-align: center; margin-top: 15px;">Update Pending... [v.42.0.7]</p>
+        <p style="font-size: 0.95rem; text-align: center; color: #555; line-height: 1.4;">
+            Thank you for choosing Megadodo Publications!<br>
+            <i>"The standard of excellence in the Ursa Minor cluster."</i>
+        </p>
+    `;
+
+    speak("Sub Etha Sync", "Update pending. Thank you for choosing Megadodo Publications. Please remain calm while we divert life support power to the antennae.");
+    
+    // We remove the complex 'if' check to make sure it always completes
+    setTimeout(() => {
+        unit.classList.remove('glitch-unit');
+        display.innerHTML = '<div class="big-text enjoy-color">SHARE AND ENJOY</div>';
+        playTone(1100, 0.4);
+        speak("Status Update", "Sync complete. Share and enjoy.");
+    }, 12000); 
+}
+
+     function runHelp() {
+    		const display = document.getElementById('content');
+    		const kit = document.getElementById('emergency-kit');
+    
+    	display.innerHTML = `
+        <div class="big-text panic-color flashing">DON'T PANIC</div>
+        <svg class="thumb-logo" viewBox="0 0 24 24"><path d="M2 20h2c.55 0 1-.45 1-1v-9c0-.55-.45-1-1-1H2v11zm19.83-7.12c.11-.36.17-.75.17-1.13 		0-1.54-1.23-2.75-2.75-2.75h-5.07l.76-3.66.02-.24c0-.31-.13-.59-.33-.79L13.83 4 7.41 10.41C7.05 10.77 6.83 11.27 6.83 11.83v7.42c0 1.1.9 2 2 2h8.42c.83 0 1.54-.5 	1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1.99l-.42.42z"/></svg>
+    	`;
+    
+    	kit.style.display = 'flex'; // Shows the Towel/Tea buttons
+    	playTone(440, 0.5);
+    	speak("Emergency Protocol", "Don't panic. Towel and Tea supplies have been deployed.");
+	}
+
+    function towelAction() {
+    	const quote = "A towel is about the most massively useful thing an interstellar hitchhiker can have.";
+    	document.getElementById('content').innerHTML = `<div class="entry-title">TOWEL</div><p>${quote}</p>`;
+    	speak("So a Towel? a Towel?...", "So this is it... We're gonna die" );
+	}
+
+    function teaAction() {
+    	const quote = "is almost, but not quite, entirely unlike a cup of tea.";
+    	document.getElementById('content').innerHTML = `<div class="entry-title">TEA</div><p>${quote}</p>`;
+    	speak("Tea?...", "So you want the taste of dried leaves..., Boiled in water..., with milk?");
+	}
+
+    const Actions = { 
+    	// 1. The Sunglasses Effect (Blackout) 
+    	blackout: function() { 
+        const unit = document.getElementById('guide-unit'); 
+        const overlay = document.createElement('div'); 
+        overlay.style = "position:absolute;top:0;left:0;width:100%;height:100%;background:black;z-index:1000;display:flex;align-items:center;justify-      	content:center;color:white;text-align:center;font-weight:bold;"; 
+        overlay.innerHTML = "PERIL DETECTED.<br>LENSES DARKENED."; 
+        unit.appendChild(overlay); 
+        setTimeout(() => overlay.remove(), 5000); 
+    }, 
+
+    	// 2. The "Bypass" Shake (Screen Shaking) 
+    	shake: function() { 
+        const unit = document.getElementById('guide-unit'); 
+        unit.style.animation = "shake 0.5s cubic-bezier(.36,.07,.19,.97) both"; 
+        setTimeout(() => unit.style.animation = "", 500); 
+    }, 
+
+    	// 3. The "Angry Guide" (Red Alert) 
+    	redAlert: function() { 
+        const unit = document.getElementById('guide-unit'); 
+        unit.style.boxShadow = "0 0 30px var(--panic-red)"; 
+        unit.style.borderColor = "var(--panic-red)"; 
+        setTimeout(() => { 
+            unit.style.boxShadow = "0 0 20px rgba(0, 255, 65, 0.2)"; 
+            unit.style.borderColor = "#333"; 
+        }, 3000); 
+    }, 
+
+    	// 4. The "Broken" Glitch (Text scrambles/flickers) 
+    	glitch: function() { 
+        const body = document.getElementById('guide-body'); 
+        body.style.textShadow = "2px 0 red, -2px 0 blue"; 
+        setTimeout(() => { 
+            body.style.textShadow = "none"; 
+        }, 500); 
+    }, 
+
+    	// 5. Just display a funny message 
+    	message: function(msg) { 
+        const body = document.getElementById('guide-body'); 
+        const p = document.createElement('p'); 
+        p.style.fontStyle = "italic"; 
+        p.style.marginTop = "15px"; 
+        p.innerHTML = msg; 
+        body.appendChild(p); 
+    }, 
+
+    	warp: function() { 
+        const unit = document.getElementById('guide-unit'); 
+        unit.style.animation = "warp 2s ease-in-out infinite"; 
+        Actions.say("Improbability levels reaching critical. Please hold onto your internal organs."); 
+        setTimeout(() => unit.style.animation = "", 6000); 
+    }, 
+
+    	panic: function() { 
+        const unit = document.getElementById('guide-unit'); 
+        unit.style.animation = "strobe 0.2s infinite"; 
+        Actions.say("Don't Panic. I repeat: Don't Panic."); 
+        setTimeout(() => unit.style.animation = "", 3000); 
+    }, 
+
+    	falling: function(callback) { 
+        const content = document.getElementById('content'); 
+        content.style.animation = "fallingPlunge 2.5s cubic-bezier(.55,.085,.68,.53) forwards"; 
+        setTimeout(() => { 
+            content.style.animation = ""; 
+            if (callback) callback(); 
+        }, 2500); 
+    }, 
+
+    	systemOverload: function(messageText, customColor) { 
+        clearTimeout(typingTimer); 
+        const body = document.getElementById('guide-body'); 
+        const targetColor = customColor || "var(--panic-red)"; 
+        const alertBox = document.createElement('div'); 
+        alertBox.className = "system-override"; 
+        alertBox.style = `margin-top: 25px; color: ${targetColor}; border: 1px dashed ${targetColor}; padding: 15px; text-transform: uppercase; font-size: 1rem;`; 
+        body.appendChild(alertBox); 
+        
+        let charIndex = 0; 
+        function typeAlert() { 
+            if (charIndex < messageText.length) { 
+                alertBox.innerHTML += messageText.charAt(charIndex); 
+                charIndex++; 
+                document.getElementById('screen').scrollTop = document.getElementById('screen').scrollHeight; 
+                setTimeout(typeAlert, 80); 
+            } 
+        } 
+        typeAlert(); 
+    }, 
+
+    	say: function(speechText) { 
+        if (typeof speak === "function") { 
+            speak(speechText); 
+        } 
+        const body = document.getElementById('guide-body'); 
+        if (body) { 
+            const dialogueBox = document.createElement('div'); 
+            dialogueBox.style = "margin-top: 15px; font-style: italic; color: #ffffff; border-left: 2px solid var(--guide-green); padding-left: 10px;"; 
+            dialogueBox.innerHTML = speechText; 
+            body.appendChild(dialogueBox); 
+            document.getElementById('screen').scrollTo({ top: document.getElementById('screen').scrollHeight, behavior: 'smooth' }); 
+        } 
+    } // Closes say
+}; // <--- THIS WAS MISSING. Closes the Actions object completely.
+
+
+// ==========================================
+// GLOBAL FUNCTIONS (Outside the Actions object)
+// ==========================================
+
+function typeWriter(text, elementId, callback) { 
+    let i = 0; 
+    const element = document.getElementById(elementId); 
+    element.innerHTML = ""; // Clear previous content
+    function type() { 
+        if (i < text.length) { 
+            element.innerHTML += text.charAt(i); 
+            i++; 
+            typingTimer = setTimeout(type, 20); 
+        } else if (callback) {
+            callback();
+        }
+    } 
+    type(); 
+} 
+
+function selectEntry(key) { 
+    if (typeof playTone === "function") playTone(880, 0.1); 
+    const inputField = document.getElementById('search-input');
+    if (inputField) inputField.value = key; 
+    
+    const suggBox = document.getElementById('suggestions');
+    if (suggBox) suggBox.style.display = 'none'; 
+    
+    clearTimeout(typingTimer); 
+    
+    const entry = entries[key]; 
+    const display = document.getElementById('content'); 
+    
+    display.innerHTML = ` 
+        <div class="entry-title">${key.toUpperCase()}</div> 
+        <div id="guide-body"></div> 
+        <div id="actions" style="margin-top:20px; display:flex; flex-direction:column; gap:10px; padding-bottom:50px;"></div> 
+    `; 
+    
+    if (typeof speak === "function") speak(key, entry.text || entry);
+
+    // If entry is an object with custom buttons
+    if (entry && entry.text) {
+        typeWriter(entry.text, 'guide-body', () => { 
+            if (entry.buttons) { 
+                const actionDiv = document.getElementById('actions'); 
+                entry.buttons.forEach(btn => { 
+                    const b = document.createElement('button'); 
+                    b.className = 'guide-button'; 
+                    b.innerText = btn.label; 
+                    b.onclick = () => { 
+                        if (btn.link) selectEntry(btn.link); 
+                        if (btn.action && typeof btn.action === "function") btn.action(); 
+                    }; 
+                    actionDiv.appendChild(b); 
+                }); 
+            } 
+        }); 
+    } else {
+        // If entry is just a plain string
+        typeWriter(entry, 'guide-body');
+    }
+} 
+
+function showSuggestions(val) { 
+    const suggBox = document.getElementById('suggestions'); 
+    suggBox.innerHTML = ''; 
+    if (!val) { 
+        suggBox.style.display = 'none'; 
+        return; 
+    } 
+    const matches = Object.keys(entries).filter(k => k.startsWith(val.toLowerCase())); 
+    if (matches.length > 0) { 
+        suggBox.style.display = 'block'; 
+        matches.forEach(m => { 
+            const div = document.createElement('div'); 
+            div.className = 'suggestion-item'; 
+            div.innerText = m; 
+            div.onclick = () => selectEntry(m); 
+            suggBox.appendChild(div); 
+        }); 
+    } else { 
+        suggBox.style.display = 'none'; 
+    } 
+} 
+
+function randomEntry() { 
+    const keys = Object.keys(entries); 
+    selectEntry(keys[Math.floor(Math.random() * keys.length)]); 
+} 
+
+function hideEmergencyKit() { 
+    const kit = document.getElementById('emergency-kit'); 
+    if (kit) kit.style.display = 'none'; 
+} // Standard function closing block (no semicolon needed)
+
+function filterByVolume(volumeNumber) {
+    // 1. Clear any suggestions that are currently open
+    const suggBox = document.getElementById('suggestions');
+    if (suggBox) suggBox.style.display = 'none';
+
+    // 2. Filter your entries object to only find matching volumes
+    // (Assuming your data object is named 'entries')
+    const display = document.getElementById('content');
+    display.innerHTML = `<div class="entry-title">VOLUME ${volumeNumber}</div><ul id="volume-list" style="list-style:none; padding:0; display:flex; flex-direction:column; gap:10px;"></ul>`;
+    
+    const listContainer = document.getElementById('volume-list');
+    
+    Object.keys(entries).forEach(key => {
+        const entry = entries[key];
+        // Check if the entry is an object and matches the volume
+        if (entry && entry.volume === volumeNumber) {
+            const li = document.createElement('li');
+            const b = document.createElement('button');
+            b.className = 'guide-button';
+            b.innerText = key.toUpperCase();
+            b.onclick = () => selectEntry(key);
+            li.appendChild(b);
+            listContainer.appendChild(li);
+        }
+    });
+
+    // 3. Play a little interface confirmation sound
+    if (typeof playTone === "function") playTone(660, 0.15);
+    
+    // 4. Speak the update if voice is turned on
+    if (typeof speak === "function") {
+        speak(`Volume ${volumeNumber}`, `Filtering database for entries matching volume ${volumeNumber}.`);
+    }
+}
+
+// Ensure there are no loose characters floating below this line
+</script> 
+</body> 
+</html>
